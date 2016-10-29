@@ -12,8 +12,7 @@ open import Conversion
 
 _≈_ : ∀ {Γ A} → Tm Γ A → Tmᴺ Γ A → Set
 _≈_ {Γ}{ι}     t tᴺ = t ~ ⌜ qᴺ tᴺ ⌝
-_≈_ {Γ}{A ⇒ B} t tᴺ =
-  ∀ {Δ}(σ : Ren Δ Γ){a aᴺ} → a ≈ aᴺ → app (t [ σ ]ᵣ) a ≈ appᴺ (tᴺ ᴺ[ σ ]ᵣ) aᴺ
+_≈_ {Γ}{A ⇒ B} t tᴺ = ∀ {Δ}(σ : Ren Δ Γ){a aᴺ} → a ≈ aᴺ → app (t [ σ ]ᵣ) a ≈ tᴺ σ aᴺ
 
 infix 3 _≈_ _≈ₛ_
 
@@ -23,9 +22,8 @@ data _≈ₛ_ {Γ} : ∀ {Δ} → Tms Γ Δ → Tmsᴺ Γ Δ → Set where
 
 ≈ᵣ : ∀ {Γ Δ A}(σ : Ren Δ Γ){t}{t' : Tmᴺ Γ A} → t ≈ t' → t [ σ ]ᵣ ≈ t' ᴺ[ σ ]ᵣ
 ≈ᵣ {A = ι}     σ {t}{t'} t≈t' = coe ((_ ~_) & (⌜⌝ᵣ t' σ ⁻¹)) (~ᵣ σ t≈t')
-≈ᵣ {A = A ⇒ B} σ {t}{t'} t≈t' = λ δ {a}{aᴺ} a≈aᴺ
-  → coe ((λ x y → (app x a ≈ proj₁ t' y aᴺ)) & (∘ᵣTm t σ δ ⁻¹) ⊗ assᵣ σ δ idᵣ)
-        (t≈t' (σ ∘ᵣ δ) a≈aᴺ)
+≈ᵣ {A = A ⇒ B} σ {t}{t'} t≈t' = λ δ {a}{aᴺ} a≈aᴺ →
+  coe ((λ x → app x a ≈ t' (σ ∘ᵣ δ) aᴺ) & (∘ᵣTm t σ δ ⁻¹)) (t≈t' (σ ∘ᵣ δ) a≈aᴺ)
 
 ≈ₛᵣ : ∀ {Γ Δ Σ}(σ : Ren Σ Γ){δ}{ν : Tmsᴺ Γ Δ} → δ ≈ₛ ν → (δ ₛ∘ᵣ σ) ≈ₛ (ν ᴺ∘ᵣ σ)
 ≈ₛᵣ σ ∙          = ∙
@@ -49,15 +47,13 @@ _~≈◾_ {A = A ⇒ B} p q = λ σ a≈aᴺ → app₁ (~ᵣ σ p) ~≈◾ q σ
   ~≈◾ ⟦Tm⟧ t (≈ₛᵣ ν σ≈δ , a≈aᴺ)
 
 ⟦Tm⟧ (app f a) {σ} {δ} σ≈δ =
-  coe ((λ x y → app x (a [ σ ]) ≈ proj₁ (Tm↑ᴺ f δ) y (Tm↑ᴺ a δ))
-    & idᵣTm (f [ σ ]) ⊗ idrᵣ idᵣ)
-  (⟦Tm⟧ f σ≈δ idᵣ (⟦Tm⟧ a σ≈δ))
+  coe ((λ x → (app x (a [ σ ]) ≈ Tm↑ᴺ f δ idᵣ (Tm↑ᴺ a δ))) & idᵣTm _)
+   (⟦Tm⟧ f σ≈δ idᵣ (⟦Tm⟧ a σ≈δ))
 
 mutual
   qᶜ : ∀ {Γ A}{t}{tᴺ : Tmᴺ Γ A} → t ≈ tᴺ → t ~ ⌜ qᴺ tᴺ ⌝
   qᶜ {Γ}{ι}     t≈tᴺ = t≈tᴺ
-  qᶜ {Γ}{A ⇒ B} t≈tᴺ rewrite (idrᵣ (idᵣ{Γ}) ⁻¹) =
-    η _ ~◾ lam (qᶜ (t≈tᴺ wk (uᶜ (var vz))))
+  qᶜ {Γ}{A ⇒ B} t≈tᴺ = η _ ~◾ lam (qᶜ (t≈tᴺ wk (uᶜ (var vz))))
 
   uᶜ : ∀ {Γ A}(n : Ne Γ A) → ⌜ n ⌝Ne ≈ uᴺ n
   uᶜ {A = ι}     n = ~refl

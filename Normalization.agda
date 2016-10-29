@@ -8,6 +8,7 @@ open import Renaming
 open import Substitution
 open import Nf
 
+infixr 6 _ᴺ∘ᵣ_
 infixl 8 _ᴺ[_]ᵣ
 
 Tmᴺ : Con → Ty → Set
